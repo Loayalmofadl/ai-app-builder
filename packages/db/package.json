@@ -2,23 +2,30 @@
   "name": "@forge/db",
   "version": "0.0.0",
   "private": true,
-  "description": "PostgreSQL access via Drizzle ORM (ADR-004): schema, migrations, tenant-scoped repository base (ARCHITECTURE.md §4)",
+  "description": "PostgreSQL access via Drizzle ORM (ADR-004): schema, migrations, tenant-scoped repository base (ARCHITECTURE.md \u00a74)",
   "license": "UNLICENSED",
   "type": "commonjs",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "require": "./dist/index.js" },
-    "./schema": { "types": "./dist/schema/index.d.ts", "require": "./dist/schema/index.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "require": "./dist/schema/index.js"
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --config vitest.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@forge/shared": "workspace:*",

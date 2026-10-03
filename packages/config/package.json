@@ -2,7 +2,7 @@
   "name": "@forge/config",
   "version": "0.0.0",
   "private": true,
-  "description": "Shared tooling configuration: TypeScript/ESLint/Prettier/Vitest presets + forbidden-provider-imports enforcement rule (CONTRIBUTING.md §6)",
+  "description": "Shared tooling configuration: TypeScript/ESLint/Prettier/Vitest presets + forbidden-provider-imports enforcement rule (CONTRIBUTING.md \u00a76)",
   "license": "UNLICENSED",
   "type": "commonjs",
   "exports": {
@@ -15,18 +15,24 @@
     "./vitest": "./vitest/base.mjs",
     "./rules/forbidden-provider-imports": "./eslint/forbidden-provider-imports.cjs"
   },
-  "files": ["tsconfig", "eslint", "prettier", "vitest"],
+  "files": [
+    "tsconfig",
+    "eslint",
+    "prettier",
+    "vitest"
+  ],
   "scripts": {
     "typecheck": "node -e \"process.exit(0)\"",
     "lint": "node -e \"process.exit(0)\"",
-    "test": "vitest run --config eslint/self-test.vitest.config.mjs",
+    "test": "vitest run --config vitest.config.ts",
     "build": "node -e \"process.exit(0)\""
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
     "eslint": "^9.39.0",
-    "typescript-eslint": "^8.46.0"
+    "typescript-eslint": "^8.46.0",
+    "@eslint/js": "^9.39.0"
   },
   "devDependencies": {
     "vitest": "^3.2.4"

@@ -1,8 +1,8 @@
 {
-  "name": "@forge/api",
+  "name": "@forge/gateway",
   "version": "0.0.0",
   "private": true,
-  "description": "Public Application API (ARCHITECTURE.md \u00a73): REST endpoints, orchestration; never touches provider SDKs or sandboxes",
+  "description": "AI Gateway service (ARCHITECTURE.md §6, ADR-002): sole owner of provider adapters; normalizes model/provider interactions via @forge/ai-contracts",
   "license": "UNLICENSED",
   "type": "commonjs",
   "main": "dist/main.js",
@@ -16,12 +16,12 @@
   },
   "dependencies": {
     "@forge/ai-contracts": "workspace:*",
-    "@forge/db": "workspace:*",
     "@forge/queue": "workspace:*",
     "@forge/shared": "workspace:*",
     "express": "^4.21.2",
-    "zod": "^3.24.0",
-    "pino": "^9.6.0"
+    "ioredis": "^5.4.2",
+    "pino": "^9.6.0",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@forge/config": "workspace:*",

@@ -98,7 +98,14 @@ export type NormalizedChatResponse = z.infer<typeof NormalizedChatResponse>;
 export const NormalizedChunk = z.object({
   kind: z.enum(["text_delta", "tool_call_delta", "done"]),
   text: z.string().optional(),
-  toolCall: z.partial(ToolCallContent).optional(),
+  /** Partial tool-call accumulation during streaming: only id/name may be known. */
+  toolCall: z
+    .object({
+      id: z.string().min(1).optional(),
+      name: z.string().min(1).optional(),
+      arguments: z.record(z.unknown()).optional(),
+    })
+    .optional(),
   usage: Usage.optional(),
   finishReason: FinishReason.optional(),
 });

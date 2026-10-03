@@ -1,0 +1,6 @@
+{
+  "extends": "@forge/config/tsconfig/nestjs.json",
+  "compilerOptions": { "outDir": "dist", "rootDir": "src", "experimentalDecorators": false, "emitDecoratorMetadata": false },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts", "dist", "node_modules"]
+}

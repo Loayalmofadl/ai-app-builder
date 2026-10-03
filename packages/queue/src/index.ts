@@ -30,7 +30,7 @@ export function redisOptionsFromUrl(url: string): RedisOptions {
     host: parsed.hostname,
     port: Number(parsed.port || (parsed.protocol === "rediss:" ? 6394 : 6379)),
     username: parsed.username || undefined,
-    password: parsed.password || undefined,
+    password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
     db: parsed.pathname && parsed.pathname !== "/" ? Number(parsed.pathname.slice(1)) : 0,
     maxRetriesPerRequest: null, // required by BullMQ blocking commands
     enableReadyCheck: true,
@@ -41,7 +41,7 @@ export function redisOptionsFromUrl(url: string): RedisOptions {
 
 export function createRedisConnection(url: string): IORedis {
   // keyPrefix would break BullMQ's internal keys; queues live in their own namespace.
-  return new IORedis(redisOptionsFromUrl(url), { lazyConnect: false });
+  return new IORedis(redisOptionsFromUrl(url));
 }
 
 export interface HeartbeatQueueHandle {

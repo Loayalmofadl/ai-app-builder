@@ -1,17 +1,21 @@
 /**
- * API app factory (ARCHITECTURE.md §3). Express for the M1 walking skeleton;
- * NestJS migration is an M2 decision point. No provider SDK imports here —
- * AI access goes through the gateway HTTP boundary using @forge/ai-contracts.
+ * API app factory (ARCHITECTURE.md §3, ADR-014). Express 4 for the M1 walking
+ * skeleton — NestJS adoption is a recorded decision, not drift. No provider
+ * SDK imports here: AI access goes through the gateway HTTP boundary using
+ * @forge/ai-contracts (ADR-002).
  */
 import express, { Express } from "express";
-import { Logger } from "pino";
+import type { Logger } from "pino";
 import { runChecks, summarize, newTraceId, DomainError } from "@forge/shared";
-import { DbHandle } from "@forge/db";
+import type { DbHandle } from "@forge/db";
+import type { HeartbeatQueueHandle } from "@forge/queue";
 
 export interface ApiAppDeps {
   logger: Logger;
   db: DbHandle;
   gatewayBaseUrl: string;
+  /** Optional in tests; when absent the job endpoint reports 503 (fail-closed). */
+  heartbeat?: HeartbeatQueueHandle;
 }
 
 const VERSION = process.env.npm_package_version ?? "0.0.0";
@@ -53,19 +57,13 @@ export function createApiApp(deps: ApiAppDeps): Express {
   // Walking-skeleton orchestration endpoint: proves api -> queue path exists.
   app.post("/v1/jobs/heartbeat", async (req, res, next) => {
     try {
-      const { HeartbeatJobPayload } = await import("@forge/queue");
-      const payload = HeartbeatJobPayload.parse(req.body);
-      const { enqueueHeartbeat, createRedisConnection, createHeartbeatQueue } = await import(
-        "@forge/queue"
-      );
-      const redisUrl = process.env.REDIS_URL;
-      if (!redisUrl) throw new DomainError("queue not configured", "QUEUE_UNCONFIGURED", 503);
-      const conn = createRedisConnection(redisUrl);
-      const handle = createHeartbeatQueue(conn);
-      const jobId = await enqueueHeartbeat(handle.queue, payload);
-      await handle.close();
-      conn.disconnect();
-      deps.logger.info({ jobId, traceId: req.traceId }, "heartbeat enqueued");
+      if (!deps.heartbeat) {
+        throw new DomainError("queue not configured", "QUEUE_UNCONFIGURED", 503);
+      }
+      const { enqueueHeartbeat } = await import("@forge/queue");
+      const jobId = await enqueueHeartbeat(deps.heartbeat.queue, req.body);
+      const traceId = (req as express.Request & { traceId?: string }).traceId;
+      deps.logger.info({ jobId, traceId }, "heartbeat enqueued");
       res.status(202).json({ jobId });
     } catch (e) {
       next(e);
@@ -82,6 +80,13 @@ export function createApiApp(deps: ApiAppDeps): Express {
     ) => {
       if (err instanceof DomainError) {
         res.status(err.statusCode).json(err.toPublicShape());
+        return;
+      }
+      // zod validation failures are client errors, not server faults.
+      if (err.name === "ZodError") {
+        res
+          .status(400)
+          .json({ error: { code: "VALIDATION_ERROR", message: "invalid request payload" } });
         return;
       }
       deps.logger.error({ err }, "unhandled error");

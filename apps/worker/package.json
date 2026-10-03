@@ -1,35 +1,33 @@
 {
-  "name": "@forge/queue",
+  "name": "@forge/worker",
   "version": "0.0.0",
   "private": true,
-  "description": "BullMQ queue definitions + Redis connection factory (ARCHITECTURE.md \u00a712): named queues, job payload schemas, safe defaults",
+  "description": "Async job processor host (ARCHITECTURE.md §3, §12): BullMQ consumers; background processing only, no public HTTP surface",
   "license": "UNLICENSED",
   "type": "commonjs",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js"
-    }
-  },
+  "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --config vitest.config.ts",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test": "vitest run"
   },
   "dependencies": {
+    "@forge/db": "workspace:*",
+    "@forge/queue": "workspace:*",
     "@forge/shared": "workspace:*",
     "bullmq": "^5.41.0",
     "ioredis": "^5.4.2",
+    "pino": "^9.6.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@forge/config": "workspace:*",
     "@types/node": "^24.0.0",
     "eslint": "^9.39.0",
+    "tsx": "^4.20.0",
     "typescript": "^5.9.0",
     "vitest": "^3.2.4"
   }

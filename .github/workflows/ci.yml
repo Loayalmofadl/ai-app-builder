@@ -1,7 +1,7 @@
-name: Foundation checks
+name: CI
 
-# M0 CI: validates the documentation set only. Application build/test jobs are
-# added at M1 per TESTING.md §5 pipeline order. Do not weaken these steps.
+# M1 pipeline per TESTING.md §5 order. Every gate is a hard failure; do not
+# weaken gates to get green (QWEN.md §4). Runs on every push + PR.
 
 on:
   push:
@@ -11,47 +11,131 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  docs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # version from package.json "packageManager"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (incl. forbidden provider-import boundary rule)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Scripts reference integrity (no dangling script files)
+        run: node scripts/check-scripts.mjs
+
+      - name: Repo consistency checks
+        run: node scripts/check-repo-consistency.mjs
+
+      - name: Forbidden-import enforcement self-demo (rule must fire on fixture)
+        run: pnpm verify:boundaries
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: quality # fast gates first; integration only after unit-green
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: forge
+          POSTGRES_PASSWORD: forge-ci-only-password
+          POSTGRES_DB: forge_dev
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U forge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://forge:forge-ci-only-password@localhost:5432/forge_dev
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm turbo run build --filter=@forge/db --filter=@forge/queue --filter=@forge/shared --filter=@forge/ai-contracts --filter=@forge/api --filter=@forge/gateway --filter=@forge/worker
+
+      - name: Apply Drizzle migrations
+        run: pnpm --filter @forge/db db:migrate
+
+      - name: Integration tests (db + queue, real services)
+        run: pnpm turbo run test:integration --filter=@forge/db --filter=@forge/queue
+
+      - name: Queue/worker end-to-end demo (enqueue → process → done)
+        run: node scripts/demo-queue-e2e.mjs
+
+      - name: Walking-skeleton smoke (api → gateway health chain)
+        run: node scripts/smoke-services.mjs
+
+  security:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
-      - name: Verify required foundation documents exist
-        run: |
-          set -euo pipefail
-          missing=0
-          for f in README.md PROJECT.md ARCHITECTURE.md SECURITY.md TESTING.md \
-                   DEVELOPMENT.md CONTRIBUTING.md DECISIONS.md ROADMAP.md QWEN.md \
-                   .gitignore .env.example LICENSE; do
-            if [ ! -s "$f" ]; then echo "::error::missing or empty: $f"; missing=1; fi
-          done
-          exit $missing
+        with:
+          fetch-depth: 0
 
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check committed files ignore rules (.env leakage guard)
+      - name: .env leakage guard
         run: |
           set -euo pipefail
           if git ls-files | grep -E '^\.env(\..*)?$' | grep -v '^\.env\.example$'; then
             echo "::error::.env-family file committed"; exit 1
           fi
 
-      - name: Markdown link sanity (relative links resolve)
+      - name: Required foundation documents exist
         run: |
           set -euo pipefail
-          rm -f /tmp/broken.txt; touch /tmp/broken.txt
-          for doc in *.md; do
-            grep -oE '\]\((\.?/?[A-Za-z0-9_.-]+\.md)(#[^)]*)?\)' "$doc" 2>/dev/null \
-              | sed -E 's/\]\(//; s/\)$//; s/#.*//' \
-              | while read -r target; do
-                  [ -z "$target" ] && continue
-                  if [ ! -f "$target" ]; then echo "BROKEN $doc -> $target" >> /tmp/broken.txt; fi
-                done
+          missing=0
+          for f in README.md PROJECT.md ARCHITECTURE.md SECURITY.md TESTING.md \
+                   DEVELOPMENT.md CONTRIBUTING.md DECISIONS.md ROADMAP.md QWEN.md \
+                   .gitignore .env.example LICENSE pnpm-lock.yaml; do
+            if [ ! -s "$f" ]; then echo "::error::missing or empty: $f"; missing=1; fi
           done
-          if [ -s /tmp/broken.txt ]; then cat /tmp/broken.txt; exit 1; fi
-          echo "All relative markdown links OK"
+          exit $missing
