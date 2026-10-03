@@ -44,10 +44,22 @@ worker.on("error", (err) => logger.error({ err }, "worker error"));
 
 // Liveness surface for dev stack monitoring (no HTTP server exposure beyond
 // loopback status file — workers are probed via Redis in M1).
-process.on("SIGTERM", async () => {
-  logger.warn({ signal: "SIGTERM", processedCount }, "worker draining");
-  await worker.close();
-  connection.disconnect();
+let shuttingDown = false;
+async function shutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.warn({ signal, processedCount }, "worker draining");
+  try {
+    await Promise.race([worker.close(), new Promise((r) => setTimeout(r, 5000))]);
+  } catch {
+    /* best-effort drain */
+  }
+  try {
+    connection.disconnect();
+  } catch {
+    /* already closed */
+  }
   process.exit(0);
-});
-process.on("SIGINT", () => process.kill(process.pid, "SIGTERM"));
+}
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));

@@ -12,6 +12,7 @@ import {
   text,
   timestamp,
   varchar,
+  bigint,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
