@@ -1,0 +1,37 @@
+{
+  "name": "@forge/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "PostgreSQL access via Drizzle ORM (ADR-004): schema, migrations, tenant-scoped repository base (ARCHITECTURE.md §4)",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "require": "./dist/index.js" },
+    "./schema": { "types": "./dist/schema/index.d.ts", "require": "./dist/schema/index.js" }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@forge/shared": "workspace:*",
+    "drizzle-orm": "^0.38.0",
+    "postgres": "^3.4.5",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@forge/config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "drizzle-kit": "^0.30.0",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

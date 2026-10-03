@@ -1,0 +1,29 @@
+{
+  "name": "@forge/ai-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Provider-neutral AI contracts: normalized chat requests/responses, streaming chunks, tool invocations, usage accounting, model metadata, provider errors (ARCHITECTURE.md §6, ADR-002)",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "require": "./dist/index.js" }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@forge/config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

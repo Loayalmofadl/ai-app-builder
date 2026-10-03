@@ -1,0 +1,7 @@
+# License
+
+This software and its documentation are proprietary and confidential. All rights reserved.
+
+Copyright (c) 2026 Forge Platform (legal entity TBD). No part of this repository may be copied, reproduced, distributed, or transmitted in any form without prior written permission from the copyright holder, except as explicitly granted by a signed commercial agreement.
+
+> Note for founders: replace "Forge Platform (legal entity TBD)" with the registered entity once incorporation completes; track via issue. If any component is later intentionally open-sourced, it must move to its own repository with an OSI-approved license chosen via ADR — do not relicense this repo casually.

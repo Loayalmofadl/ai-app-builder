@@ -1,0 +1,57 @@
+name: Foundation checks
+
+# M0 CI: validates the documentation set only. Application build/test jobs are
+# added at M1 per TESTING.md §5 pipeline order. Do not weaken these steps.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify required foundation documents exist
+        run: |
+          set -euo pipefail
+          missing=0
+          for f in README.md PROJECT.md ARCHITECTURE.md SECURITY.md TESTING.md \
+                   DEVELOPMENT.md CONTRIBUTING.md DECISIONS.md ROADMAP.md QWEN.md \
+                   .gitignore .env.example LICENSE; do
+            if [ ! -s "$f" ]; then echo "::error::missing or empty: $f"; missing=1; fi
+          done
+          exit $missing
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check committed files ignore rules (.env leakage guard)
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -E '^\.env(\..*)?$' | grep -v '^\.env\.example$'; then
+            echo "::error::.env-family file committed"; exit 1
+          fi
+
+      - name: Markdown link sanity (relative links resolve)
+        run: |
+          set -euo pipefail
+          rm -f /tmp/broken.txt; touch /tmp/broken.txt
+          for doc in *.md; do
+            grep -oE '\]\((\.?/?[A-Za-z0-9_.-]+\.md)(#[^)]*)?\)' "$doc" 2>/dev/null \
+              | sed -E 's/\]\(//; s/\)$//; s/#.*//' \
+              | while read -r target; do
+                  [ -z "$target" ] && continue
+                  if [ ! -f "$target" ]; then echo "BROKEN $doc -> $target" >> /tmp/broken.txt; fi
+                done
+          done
+          if [ -s /tmp/broken.txt ]; then cat /tmp/broken.txt; exit 1; fi
+          echo "All relative markdown links OK"

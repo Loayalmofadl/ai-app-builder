@@ -1,0 +1,33 @@
+{
+  "name": "@forge/shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared contracts/types: env validation (fail-fast), structured logging, domain errors, request context (ARCHITECTURE.md §15, SECURITY.md §3)",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "require": "./dist/index.js" },
+    "./env": { "types": "./dist/env.d.ts", "require": "./dist/env.js" },
+    "./logger": { "types": "./dist/logger.d.ts", "require": "./dist/logger.js" },
+    "./errors": { "types": "./dist/errors.d.ts", "require": "./dist/errors.js" }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "pino": "^9.6.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@forge/config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

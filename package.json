@@ -1,0 +1,35 @@
+{
+  "name": "forge-platform",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Forge Platform — provider-agnostic AI application-building SaaS (monorepo root)",
+  "license": "SEE LICENSE IN LICENSE",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20 <23",
+    "pnpm": ">=9 <10"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint && eslint . --config scripts/eslint/forbidden-imports.eslint.config.mjs",
+    "lint:boundaries": "eslint . --config scripts/eslint/forbidden-imports.eslint.config.mjs",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json,yml,yaml,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,cjs,mjs,json,yml,yaml,md}\"",
+    "db:generate": "pnpm --filter @forge/db db:generate",
+    "db:migrate": "pnpm --filter @forge/db db:migrate",
+    "db:studio": "pnpm --filter @forge/db db:studio",
+    "verify:boundaries": "tsx scripts/verify-forbidden-imports.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "eslint": "^9.39.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "@forge/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Public Application API (ARCHITECTURE.md §3): REST endpoints, orchestration; never touches provider SDKs or sandboxes",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@forge/ai-contracts": "workspace:*",
+    "@forge/db": "workspace:*",
+    "@forge/queue": "workspace:*",
+    "@forge/shared": "workspace:*",
+    "express": "^4.21.2",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@forge/config": "workspace:*",
+    "@types/express": "^4.17.21",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.39.0",
+    "supertest": "^7.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

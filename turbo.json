@@ -1,0 +1,41 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local", ".env"],
+  "globalEnv": [
+    "NODE_ENV",
+    "FORGE_ENV",
+    "LOG_LEVEL",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "API_PORT",
+    "GATEWAY_PORT",
+    "WEB_PORT",
+    "API_BASE_URL",
+    "GATEWAY_BASE_URL",
+    "NEXT_PUBLIC_API_BASE_URL",
+    "SERVICE_TOKEN_SECRET"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.test.ts", "!**/*.spec.ts"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
