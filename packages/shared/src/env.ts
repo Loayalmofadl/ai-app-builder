@@ -58,17 +58,40 @@ const providerKeysSchema = z.object({
   QWEN_API_KEY: z.string().optional().default(""),
 });
 
+/**
+ * Inter-service auth secret (ADR-008). REQUIRED in production for every
+ * service; optional elsewhere so the M1 walking skeleton boots without it.
+ */
 const serviceTokenSchema = z.object({
   SERVICE_TOKEN_SECRET: z
     .string()
-    .min(32, "SERVICE_TOKEN_SECRET must be at least 32 characters (SECURITY.md §3)"),
+    .min(32, "SERVICE_TOKEN_SECRET must be at least 32 characters (SECURITY.md §3)")
+    .optional(),
 });
+
+/**
+ * Object-level refinement: a present-but-empty value is rejected (catches
+ * `SERVICE_TOKEN_SECRET=` from a carelessly copied .env.example); absent is
+ * tolerated outside production (assertProductionRules enforces presence there).
+ */
+const serviceTokenRequiredShape = serviceTokenSchema.refine(
+  (data) => data.SERVICE_TOKEN_SECRET === undefined || data.SERVICE_TOKEN_SECRET.length >= 32,
+  "SERVICE_TOKEN_SECRET, if set, must be at least 32 characters (SECURITY.md §3)",
+);
 
 /** Per-service requirement map — api/worker never need provider keys. */
 const schemas = {
-  api: baseSchema.merge(databaseSchema).merge(redisSchema).merge(portsSchema).merge(serviceTokenSchema),
-  gateway: baseSchema.merge(redisSchema).merge(portsSchema).merge(providerKeysSchema).merge(serviceTokenSchema),
-  worker: baseSchema.merge(databaseSchema).merge(redisSchema).merge(serviceTokenSchema),
+  api: baseSchema
+    .merge(databaseSchema)
+    .merge(redisSchema)
+    .merge(portsSchema)
+    .merge(serviceTokenRequiredShape),
+  gateway: baseSchema
+    .merge(redisSchema)
+    .merge(portsSchema)
+    .merge(providerKeysSchema)
+    .merge(serviceTokenRequiredShape),
+  worker: baseSchema.merge(databaseSchema).merge(redisSchema).merge(serviceTokenRequiredShape),
   web: baseSchema.merge(portsSchema),
 } as const;
 
@@ -94,6 +117,13 @@ export class EnvValidationError extends Error {
 function assertProductionRules(data: Record<string, unknown>, service: ServiceName): void {
   const problems: string[] = [];
   if (data.NODE_ENV === "production") {
+    // Inter-service token is mandatory in production for every backend service.
+    if (service !== "web") {
+      const token = data.SERVICE_TOKEN_SECRET;
+      if (typeof token !== "string" || token.length < 32) {
+        problems.push(`${service} in production requires SERVICE_TOKEN_SECRET (>=32 chars)`);
+      }
+    }
     if (service === "gateway") {
       const hasKey = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "QWEN_API_KEY"].some(
         (k) => typeof data[k] === "string" && (data[k] as string).length > 0,

@@ -1,0 +1,31 @@
+{
+  "name": "@forge/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Product frontend (ARCHITECTURE.md §2): Next.js App Router shell + health only in M1. Talks to api over HTTP; never touches provider SDKs or DB credentials (ADR-002).",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "next dev -p ${WEB_PORT:-3000}",
+    "build": "next build",
+    "start": "next start -p ${WEB_PORT:-3000}",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@forge/shared": "workspace:*",
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@forge/config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

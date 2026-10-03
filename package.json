@@ -6,22 +6,29 @@
   "license": "SEE LICENSE IN LICENSE",
   "packageManager": "pnpm@9.15.0",
   "engines": {
-    "node": ">=20 <23",
+    "node": ">=22 <25",
     "pnpm": ">=9 <10"
   },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint && eslint . --config scripts/eslint/forbidden-imports.eslint.config.mjs",
-    "lint:boundaries": "eslint . --config scripts/eslint/forbidden-imports.eslint.config.mjs",
+    "lint": "turbo run lint && eslint . --config packages/config/eslint/forbidden-imports.eslint.config.mjs --no-config-lookup",
+    "lint:boundaries": "eslint . --config packages/config/eslint/forbidden-imports.eslint.config.mjs --no-config-lookup",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
     "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json,yml,yaml,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,cjs,mjs,json,yml,yaml,md}\"",
     "db:generate": "pnpm --filter @forge/db db:generate",
     "db:migrate": "pnpm --filter @forge/db db:migrate",
     "db:studio": "pnpm --filter @forge/db db:studio",
-    "verify:boundaries": "tsx scripts/verify-forbidden-imports.ts"
+    "verify:boundaries": "tsx scripts/verify-forbidden-imports.ts",
+    "verify:scripts": "node scripts/check-scripts.mjs",
+    "verify:consistency": "node scripts/check-repo-consistency.mjs",
+    "demo:queue-e2e": "node scripts/demo-queue-e2e.mjs",
+    "smoke:services": "node scripts/smoke-services.mjs",
+    "infra:up": "docker compose -f infra/docker/compose.dev.yml up -d",
+    "infra:down": "docker compose -f infra/docker/compose.dev.yml down"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

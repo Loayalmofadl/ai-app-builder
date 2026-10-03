@@ -1,0 +1,73 @@
+# Forge Platform — local development infrastructure (M1).
+#
+# Development ONLY. Credentials here are fixed, non-secret dev values; they
+# must never appear in any deployed environment (SECURITY.md §3). All ports
+# bind to 127.0.0.1 by default via explicit mapping. No production concerns
+# belong in this file — deployment topology is decided in M9 (ADR-pending P-2).
+#
+# Usage: pnpm infra:up / pnpm infra:down   (or docker compose -f this file)
+
+name: forge-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: forge
+      POSTGRES_PASSWORD: forge_dev_only
+      POSTGRES_DB: forge_dev
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ./volumes/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forge -d forge_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # append-only so BullMQ jobs survive dev restarts; no auth in dev loopback.
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - ./volumes/redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: forge_dev_only
+      MINIO_ROOT_PASSWORD: forge_dev_only_password
+    ports:
+      - "127.0.0.1:9000:9000" # S3-compatible API
+      - "127.0.0.1:9001:9001" # console (dev convenience only)
+    volumes:
+      - ./volumes/miniodata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit:v1.21.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025" # SMTP capture
+      - "127.0.0.1:8025:8025" # web UI (loopback only)
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
